@@ -1,0 +1,53 @@
+//in general we will use 4 bit registers for the alarm 
+bool clock_mode = true;
+bool LDO = false;
+int current_time;
+int alarm_time;
+int adjust_parameter;
+
+int main() {
+    while (true) {
+        if (clock_mode) {
+            // if in clock mode
+            if (current_time == alarm_time) {
+                // check if it matches the alarm time
+                // if yes well signal the alarm
+               // for sake of bonus -- buzzer on 
+              // if someone presses a button, stop the alarm and buzzer
+            }
+        } else {
+            // adjustment mode
+            // activate the 7seg and LEDS
+            if (BTNC || BTNL || BTNR||BNTU||BTND) {
+                // pressing a button
+                // exit adjustment mode
+                // switch back to clock mode plus turn off display
+            }
+        }
+        if (BTNC) {
+            // if press main button 
+            // toggle between clock mode and adjustment mode
+            // LD0 depends on mode
+        }
+
+        if (BTNL) {
+            // left pressed -- shift left 
+            // update LED 
+        }
+
+        if (BTNR) {
+            // right pressed --- shift right 
+            // update LED 
+        }
+
+        if (BTNU) {
+            // increase in a certain parameter
+            // update
+        }
+
+        if (BTND) {
+            // decrease in a certain parameter
+            // update
+        }
+    }
+}
