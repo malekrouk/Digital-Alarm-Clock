@@ -18,13 +18,15 @@ wire [1:0] sel;
 wire[3:0] out;
 wire clk_out;
 wire clk_1hz;
-
+wire clk_250k;
 ClockDivider #(250000)div(clk, reset, clk_out);
 ClockDivider #(50000000) clockdiv_1hz(clk,reset,clk_1hz);
+ClockDivider #(100) clock_250k(clk,reset,clk_250k);
+wire clk_final;
+assign clk_final = en? clk_250k:clk;
+//assign clk_final = en? clk:clk  //comment out and comment the previous line for a faster clock
 
-
-
-MinsAndSecCounter digitalClk( .clk(clk), .reset(reset),.en(en), 
+MinsAndSecCounter digitalClk( .clk(clk_final), .reset(reset),.en(en), 
  .c_up_min(count_upMin), .c_up_hour(count_upHour),
 .c_down_min(count_downMin),.c_down_hour(count_downHour),
 .count1(sec_units), .count3(Min_units), .count2(sec_tens), .count4(Min_Tens),
@@ -32,10 +34,16 @@ MinsAndSecCounter digitalClk( .clk(clk), .reset(reset),.en(en),
 
 
 always @(*) begin
+if(en)
+begin
     if(anode_active==4'b1011 && clk_1hz)
         DP=0; //active low, so the DP activates
     else 
        DP=1;
+       end
+       else begin
+       DP=1;
+       end
     end
 
 
