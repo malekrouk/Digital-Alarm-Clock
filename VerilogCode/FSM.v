@@ -42,19 +42,21 @@ end
 endmodule
 
 
-module fsm(input clk, rst, btn1,btn2,btn3,btn4,btn5, output [6:0]segments,output [3:0] anode_active, output  DP,  LD0,LD12, LD13, LD14, LD15);
+module fsm(input clk, rst, btn1,btn2,btn3,btn4,btn5, output [6:0]segments,output [3:0] anode_active, output  DP,  LD0,LD12, LD13, LD14, LD15,buzzer);
 
 
 reg [2:0] state, nextState;
 wire BTNU, BTNC, BTND, BTNR, BTNL;
 wire [4:0]Buttons;
-parameter [2:0] A= 3'b000,B=3'b001, C=3'b010, D= 3'b011, E= 3'b100;
+parameter [2:0] A= 3'b000,B=3'b001, C=3'b010, D= 3'b011, E= 3'b100, F=3'b101;
 wire clk_out;
 reg [2:0] sel;
 reg enable_clock;
 reg display_selector;
+wire oneHz;
 
 ClockDivider #(250000)div (clk, rst, clk_out);
+ClockDivider #(50000000) oneHzClock(clk,rst,oneHz);
 
 wire [6:0]segments_out_alarm;
 wire [6:0]segments_out_clock;
@@ -92,7 +94,7 @@ decoder_2x4(sel,Buttons[2],Buttons[3],up_down_reg);
 wire [19:0] check1,check2;
 wire alarm_enable;
 wire extra;
-
+reg alarmOn;
 exp5 alarm(clk,rst,0,up_down_reg[3],up_down_reg[2],up_down_reg[1],up_down_reg[0],segments_out_alarm,anode_active_alarm,check1,extra);
 exp5 time_clock(clk,rst,enable_clock,up_down_reg[7],up_down_reg[6],up_down_reg[5],up_down_reg[4],segments_out_clock,anode_active_clock,check2,DP);
 
@@ -102,73 +104,77 @@ exp5 time_clock(clk,rst,enable_clock,up_down_reg[7],up_down_reg[6],up_down_reg[5
 always @(*) begin
     case (state)
         A: begin
+        
+        sel=4;
+        enable_clock=1;
+        display_selector=0;
+        nextState=A;
             if (Buttons == 5'b10000) begin  // BTNC
                 sel = 0;
                 enable_clock = 0;
                 nextState = B;
                 display_selector = 0;
-            end else begin
-                sel=4;
-                enable_clock = 1;
-                display_selector = 0;
-                nextState = A;
+            end 
+            if(check1==check2 && check1!=0)
+            begin 
+            nextState=F;
+            display_selector = 1;
+            enable_clock=1;
             end
         end
 
         B: begin
+        
+        
+         sel = 0;
+         enable_clock = 0;
+         display_selector = 0;
+         nextState=B;
+
+       
             if (Buttons == 5'b10000) begin  // BTNC
                 sel = 4;
                 enable_clock = 1;
                 nextState = A;
                 display_selector = 0;
             end else if (Buttons == 5'b01000) begin // BTND
-                sel = 0;
-                enable_clock = 0;
                 nextState = B;
             end else if (Buttons == 5'b00100) begin // BTNU
-                sel = 0;
-                enable_clock = 0;
                 nextState = B;
-                display_selector = 0;
             end else if (Buttons == 5'b00010) begin // BTNR
                 sel = 1;
-                enable_clock = 0;
-                display_selector = 0;
                 nextState = C;
             end else if (Buttons == 5'b00001) begin // BTNL
                 sel = 3;
-                enable_clock = 0;
-                display_selector = 0;
                 nextState = E;
+                display_selector = 1;
             end else begin
                 nextState = B;
             end
         end
 
         C: begin
+        
+                 sel = 1;
+                 enable_clock = 0;
+                 display_selector = 0;
+                 nextState=C;
+
             if (Buttons == 5'b10000) begin  // BTNC
                 sel = 4;
                 enable_clock = 1;
                 nextState = A;
                 display_selector = 0;
             end else if (Buttons == 5'b01000) begin // BTND
-                sel = 1;
-                enable_clock = 0;
                 nextState = C;
-                display_selector = 0;
             end else if (Buttons == 5'b00100) begin // BTNU
-                sel = 1;
-                enable_clock = 0;
                 nextState = C;
-                display_selector = 0;
             end else if (Buttons == 5'b00010) begin // BTNR
                 sel = 2;
-                enable_clock = 0;
                 nextState = D;
                 display_selector = 1;
             end else if (Buttons == 5'b00001) begin // BTNL
                 sel = 0;
-                enable_clock = 0;
                 nextState = B;
                 display_selector = 0;
             end else begin
@@ -177,29 +183,27 @@ always @(*) begin
         end
 
         D: begin
+        
+                 sel = 2;
+                 enable_clock = 0;
+                 display_selector = 1;
+                 nextState=D;
+
             if (Buttons == 5'b10000) begin  // BTNC
                 sel = 4;
                 enable_clock = 1;
                 nextState = A;
                 display_selector = 0;
             end else if (Buttons == 5'b01000) begin // BTND
-                sel = 2;
-                enable_clock = 0;
                 nextState = D;
-                display_selector = 1;
             end else if (Buttons == 5'b00100) begin // BTNU
-                sel = 2;
-                enable_clock = 0;
-                display_selector = 1;
                 nextState = D;
             end else if (Buttons == 5'b00010) begin // BTNR
                 sel = 3;
-                enable_clock = 0;
                 display_selector = 1;
                 nextState = E;
             end else if (Buttons == 5'b00001) begin // BTNL
                 sel = 1;
-                enable_clock = 0;
                 display_selector = 0;
                 nextState = C;
             end else begin
@@ -208,34 +212,49 @@ always @(*) begin
         end
 
         E: begin
+        
+                 sel = 3;
+                 enable_clock = 0;
+                 display_selector = 1;
+                 nextState=E;
+               
             if (Buttons == 5'b10000) begin  // BTNC
                 sel = 4;
                 enable_clock = 1;
                 nextState = A;
                 display_selector = 0;
+                
             end else if (Buttons == 5'b01000) begin // BTND
-                sel = 3;
-                enable_clock = 0;
-                display_selector = 1;
                 nextState = E;
             end else if (Buttons == 5'b00100) begin // BTNU
-                sel = 3;
-                enable_clock = 0;
-                display_selector = 1;
                 nextState = E;
             end else if (Buttons == 5'b00010) begin // BTNR
                 sel = 0;
-                enable_clock = 0;
                 display_selector = 0;
                 nextState = B;
             end else if (Buttons == 5'b00001) begin // BTNL
                 sel = 2;
-                enable_clock = 0;
                 display_selector = 1;
                 nextState = D;
             end else begin
                 nextState = E;
             end
+        end
+        
+        F :
+        begin 
+        display_selector=1;
+        enable_clock=1;
+        nextState=F;
+        sel=4;
+        if(Buttons==1||Buttons==2||Buttons==4||Buttons==8||Buttons==16)
+        begin
+          display_selector=0;
+              enable_clock=1;
+              nextState=A;
+              sel=4;
+        end
+   
         end
 
         default: begin
@@ -254,11 +273,21 @@ else
 state <= nextState;
 end
 
+
+always @(*) begin
+    if(state==F && oneHz)
+        alarmOn=1; 
+    else 
+       alarmOn=0;       
+  
+    end
+
+
 assign segments = display_selector? segments_out_alarm:segments_out_clock;
 assign anode_active = display_selector? anode_active_alarm:anode_active_clock;
 
-
-assign LD0 = state==A;
+assign buzzer = (state==F) ? alarmOn:0;
+assign LD0 =  (state==F)? alarmOn:(state==A);
 assign LD12 = state==B;
 assign LD13 = state==C;
 assign LD14 = state==D;
