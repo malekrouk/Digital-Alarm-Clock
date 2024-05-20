@@ -1,47 +1,69 @@
 `timescale 1ns / 1ps
-
-
-
-
-module decoder_2x4 (
-    input  [2:0] sel,   // 2-bit selector
-    input  btnu,btnd,    // 2-bit input
-    output reg [7:0] out    // 4-bit output
+/*******************************************************************
+*
+* Module: Mod3Counter.v
+* Project: Alarm/Clock
+* Author1: Mostafa Gaafar, mostafa21314@aucegypt.edu
+* Description: This module implements a 3x8 binary decoder responsible for driving the controls of button up and button down.
+*
+* Change history: 
+*   05/18/24 - Initial implementation
+*   05/19/24 - Added an extra state for the alarm
+**********************************************************************/
+module decoder_3x4 (
+    input  [2:0] sel,   // 3-bit selector
+    input  btnu, btnd,    // 2-bit input
+    output reg [7:0] out    // 8-bit output
 );
-always @(*) begin
-    case (sel)
-        3'b000: begin
-         out=0;
-         out[6]=btnu;
-         out[4]=btnd;
-       end
-        3'b001: 
-        begin
-           out=0;
-           out[7]=btnu;
-           out[5]=btnd;
-         end
-        3'b010:begin
-         out = 0;
-         out[2]=btnu;
-         out[0]=btnd;
-         end
-        3'b011: begin
-         out = 0;
-         out[3]=btnu;
-         out[1]=btnd;
-         end
-  
-       3'b100 : begin
-       out=0;
-       end
-
-    endcase
-end
+    always @(*) begin
+        case (sel)
+            3'b000: begin
+                out = 8'b0;
+                out[6] = btnu;
+                out[4] = btnd;
+            end
+            3'b001: begin
+                out = 8'b0;
+                out[7] = btnu;
+                out[5] = btnd;
+            end
+            3'b010: begin
+                out = 8'b0;
+                out[2] = btnu;
+                out[0] = btnd;
+            end
+            3'b011: begin
+                out = 8'b0;
+                out[3] = btnu;
+                out[1] = btnd;
+            end
+            3'b100: begin
+                out = 8'b0;
+            end
+        endcase
+    end
 
 endmodule
 
 
+/*******************************************************************
+*
+* Module: Mod3Counter.v
+* Project: Alarm/Clock
+* Author1: Mostafa Gaafar, mostafa21314@aucegypt.edu
+* Author2: Malek Mahmoud, Malekrouk@aucegypt.edu
+* Author3: Saif Ahmed, saif_ahmed@aucegypt.edu
+* Author4: Habiba Seif, habibaseif@aucegypt.edu
+* Description: This module implements the main code for driving the alarm and clock system
+*
+* Change history: 
+*   05/13/24 - Initial implementation 2,4
+*   05/19/24 - added states and if statements for every button1  1
+*   05/19/24 - implemented a multiplexer to control whats showing on the 1,3
+*   05/19/24 - fixed the fsm implementation to accomodate states more smoothly 1
+*   05/19/24 - Used 2 clocks simultanusly for different purposes 1,3
+*   05/19/24 - added the code to use a buzzer with the clock 1
+**********************************************************************/
 module fsm(input clk, rst, btn1,btn2,btn3,btn4,btn5, output [6:0]segments,output [3:0] anode_active, output  DP,  LD0,LD12, LD13, LD14, LD15,buzzer);
 
 
@@ -64,23 +86,6 @@ wire [3:0] anode_active_alarm;
 wire [3:0] anode_active_clock;
 
 
-
-//A=clock/alarm
-//B=time hour
-//C=time minute
-//D=alarm hour
-//E=alarm minute
-// Next state generation
-
-
-//PushButtonDetector two(clk_out, rst, btn2, BTNC);
-//PushButtonDetector three(clk_out,rst, btn3, BTND);
-//PushButtonDetector one(clk_out, rst, btn1, BTNU);
-//PushButtonDetector four(clk_out,rst, btn4, BTNR);
-//PushButtonDetector five(clk_out,rst, btn5, BTNL);
-
-
-
 PushButtonDetector two(clk_out, rst, btn1, Buttons[4]);  //BTNC
 PushButtonDetector three(clk_out,rst, btn2, Buttons[3]); //BTND
 PushButtonDetector one(clk_out, rst, btn3, Buttons[2]);  //BTNU
@@ -88,7 +93,7 @@ PushButtonDetector four(clk_out,rst, btn4, Buttons[1]);  // BTNR
 PushButtonDetector five(clk_out,rst, btn5, Buttons[0]);  // BTNL
 
 wire [7:0] up_down_reg;
-decoder_2x4(sel,Buttons[2],Buttons[3],up_down_reg);
+decoder_3x4(sel,Buttons[2],Buttons[3],up_down_reg);
 
 
 wire [19:0] check1,check2;
